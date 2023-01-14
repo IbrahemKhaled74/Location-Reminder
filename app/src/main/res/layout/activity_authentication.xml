@@ -6,12 +6,37 @@
     android:layout_height="match_parent"
     tools:context=".authentication.AuthenticationActivity">
 
-    <androidx.fragment.app.FragmentContainerView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:name="com.udacity.project4.authentication.AuthFragment"
-        android:id="@+id/authenticationFragment"
+        tools:context=".authentication.AuthenticationActivity">
 
-        />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/login_sign"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_margin="20dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="18dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:drawablePadding="10dp"
+                android:gravity="center"
+                android:text="@string/select_login"
+                android:textAllCaps="true"
+                android:textSize="@dimen/text_size_large"
+                app:drawableTopCompat="@drawable/ic_login" />
+
+        </androidx.cardview.widget.CardView>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

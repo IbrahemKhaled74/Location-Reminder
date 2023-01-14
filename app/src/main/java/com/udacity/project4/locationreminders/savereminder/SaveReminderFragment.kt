@@ -65,15 +65,18 @@ class SaveReminderFragment : BaseFragment() {
             if (latitude != null && longitude != null && !TextUtils.isEmpty(title))
                 addGeofence(LatLng(latitude, longitude), geofenceId)
 
+
             _viewModel.validateAndSaveReminder(
                 ReminderDataItem(
                     title,
                     description,
                     location,
                     latitude,
-                    longitude
+                    longitude,
+                    geofenceId
                 )
             )
+
 
             _viewModel.navigateToReminderList.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
                 if(it){
@@ -93,8 +96,10 @@ class SaveReminderFragment : BaseFragment() {
     }
 
 
-    private fun addGeofence(latLng: LatLng,
-                            geofenceId: String) {
+    private fun addGeofence(
+        latLng: LatLng,
+        geofenceId: String
+    ) {
         val geofence = Geofence.Builder()
             .setRequestId(geofenceId)
             .setCircularRegion(

@@ -180,6 +180,15 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.isNotEmpty() && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                enableMyLocation()
+            }
+        } else {
+            _viewModel.showSnackBar.postValue(getString(R.string.permission_denied_explanation))
+
+        }
+
         if (requestCode == REQUEST_CODE_BACKGROUND) {
             checkDeviceLocationSettings()
         }

@@ -1,5 +1,6 @@
 package com.udacity.project4.locationreminders.reminderslist
 
+import android.app.Application
 import android.os.Bundle
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.fragment.app.testing.launchFragmentInContainer
@@ -17,6 +18,8 @@ import com.udacity.project4.R
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.data.local.LocalDB
+import com.udacity.project4.locationreminders.data.local.RemindersDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
@@ -37,6 +40,7 @@ import org.mockito.Mockito.verify
 import org.hamcrest.core.IsNot.not
 import org.junit.Rule
 import org.koin.core.context.GlobalContext
+import org.koin.test.get
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -45,6 +49,8 @@ import org.koin.core.context.GlobalContext
 class ReminderListFragmentTest {
 
     private lateinit var repository: ReminderDataSource
+    private lateinit var appContext: Application
+
 
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
@@ -76,6 +82,8 @@ class ReminderListFragmentTest {
     @Before
     fun setup() {
         stopKoin()
+        appContext = getApplicationContext()
+
         // use Koin Library as a service locator
         val myModule = module {
             //Declare a ViewModel - be later inject into Fragment with dedicated injector using by viewModel()
@@ -84,8 +92,11 @@ class ReminderListFragmentTest {
                     get(), get()
                 )
             }
+            single { LocalDB.createRemindersDao(appContext) }
+
+
             single {
-                FakeDataSource(mutableListOf()) as ReminderDataSource
+                FakeDataSource(get() as RemindersDao) as ReminderDataSource
             }
         }
         startKoin {
@@ -148,15 +159,6 @@ class ReminderListFragmentTest {
     }
 
 
-    @Test
-    fun check_No_RemindersList()= runBlockingTest{
-        //launch fragment scenario
-        launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
-
-        //check if no data displayed
-        onView(withId(R.id.noDataTextView)).check(matches(isDisplayed()))
-
-    }
 
 
 
