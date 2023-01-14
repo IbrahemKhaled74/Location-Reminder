@@ -2,21 +2,26 @@ package com.udacity.project4.locationreminders.savereminder
 
 import android.os.Build
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.udacity.project4.R
 import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
+import com.udacity.project4.locationreminders.data.local.RemindersDatabase
+import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.getOrAwaitValueTest
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
+import kotlinx.coroutines.Dispatchers
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +36,9 @@ class SaveReminderViewModelTest {
 
     private lateinit var saveReminderViewModel: SaveReminderViewModel
     private lateinit var fakeDataSource: FakeDataSource
+    private lateinit var repository: RemindersLocalRepository
+    private lateinit var database: RemindersDatabase
+
 
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
@@ -60,17 +68,29 @@ class SaveReminderViewModelTest {
         )
     )
 
+    @Before
+    fun setup() {
+        database = Room.inMemoryDatabaseBuilder(
+            ApplicationProvider.getApplicationContext(), RemindersDatabase::class.java
+        ).allowMainThreadQueries().build()
+        fakeDataSource= FakeDataSource(database.reminderDao())
+
+        repository= RemindersLocalRepository(database.reminderDao(), Dispatchers.Main)
+
+    }
 
 
 
     @After
     fun finish() {
         stopKoin()
+        database.close()
     }
 
     @Test
     fun `when list is no title   return enter your title `() = runBlockingTest {
-        fakeDataSource = FakeDataSource(null)
+        repository.saveReminder(ReminderDTO("","desc","test",0.0,0.0))
+
         saveReminderViewModel = SaveReminderViewModel(
             ApplicationProvider.getApplicationContext(),
             fakeDataSource)
@@ -84,7 +104,7 @@ class SaveReminderViewModelTest {
     }
     @Test
     fun `when list is no location   return enter your title `() = runBlockingTest {
-        fakeDataSource = FakeDataSource(null)
+        repository.saveReminder(ReminderDTO("ddd","desc","",0.0,0.0))
         saveReminderViewModel = SaveReminderViewModel(
             ApplicationProvider.getApplicationContext(),
             fakeDataSource)
@@ -98,7 +118,8 @@ class SaveReminderViewModelTest {
     }
     @Test
     fun `when list is not loaded  show loading `() = runBlockingTest {
-        fakeDataSource = FakeDataSource(null)
+        repository.saveReminder(ReminderDTO("dd","desc","dd",0.0,0.0))
+
         saveReminderViewModel = SaveReminderViewModel(
             ApplicationProvider.getApplicationContext(),
             fakeDataSource)
