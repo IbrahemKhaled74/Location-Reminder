@@ -70,7 +70,8 @@ class SaveReminderViewModelTest {
     )
 
     @Before
-    fun model(){ stopKoin()
+    fun setup(){
+        stopKoin()
         fakeDataSource = FakeDataSource()
         saveReminderViewModel = SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }

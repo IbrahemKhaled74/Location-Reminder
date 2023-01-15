@@ -95,6 +95,8 @@ class RemindersListViewModelTest {
     @Test
     fun `when list is null or empty return no reminder to return `() = runBlockingTest {
         fakeDataSource.deleteAllReminders()
+        fakeDataSource.setError(false)
+
 
         reminderListViewModel.loadReminders()
 
@@ -105,6 +107,7 @@ class RemindersListViewModelTest {
     }
     @Test
     fun `when list have data return the data `() = runBlockingTest {
+
         fakeDataSource.saveReminder(reminderList[0])
 
         reminderListViewModel.loadReminders()
@@ -126,11 +129,11 @@ class RemindersListViewModelTest {
     @Test
     fun loadRemindersShouldReturnError()= runBlockingTest{
 
-        fakeDataSource.setShouldReturnError(true)
+        fakeDataSource.setError(true)
 
         reminderListViewModel.loadReminders()
 
-        assertThat(reminderListViewModel.showSnackBar.getOrAwaitValueTest(), `is`("Error occurred"))
+        assertThat(reminderListViewModel.showSnackBar.getOrAwaitValueTest(), `is`("Tasks not found"))
     }
 
 

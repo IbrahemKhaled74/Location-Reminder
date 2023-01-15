@@ -20,6 +20,7 @@ import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
+import com.google.android.material.internal.ContextUtils.getActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
@@ -200,10 +201,16 @@ class RemindersActivityTest :
         //click in save reminder navigate to activity
         onView(withId(R.id.saveReminder)).perform(click())
         //check for toast is appear
-
-        //this still not working (on api 29 and 30)
-        uiDevice.waitForIdle()
-        org.junit.Assert.assertTrue(uiDevice.hasObject(By.text("Reminder Saved !")))
+        // this still not working (on api 29 and 30)
+        onView(withText(R.string.reminder_saved)).inRoot(
+            withDecorView(
+                   `is` (
+                       getActivity(
+                            appContext
+                        )?.window?.decorView
+                    )
+            )
+        ).check(matches(isDisplayed()))
 
         scenario.close()
     }
