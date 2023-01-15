@@ -1,23 +1,27 @@
 package com.udacity.project4
 
+import android.app.Activity
 import android.app.Application
+import android.os.IBinder
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.core.app.launchActivity
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.Root
 import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.withDecorView
+import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import androidx.test.rule.ActivityTestRule
-import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
 import com.google.android.material.internal.ContextUtils.getActivity
@@ -29,10 +33,12 @@ import com.udacity.project4.locationreminders.reminderslist.RemindersListViewMod
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.not
+import kotlinx.coroutines.withContext
 import org.hamcrest.Description
+import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.not
 import org.hamcrest.TypeSafeMatcher
 import org.junit.After
 import org.junit.Before
@@ -45,6 +51,7 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.koin.test.get
+import org.koin.test.inject
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -55,6 +62,8 @@ class RemindersActivityTest :
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
     private val dataBindingIdlingResource = DataBindingIdlingResource()
+    @get:Rule
+    val activityRule = ActivityTestRule(RemindersActivity::class.java)
 
 
 
@@ -165,8 +174,8 @@ class RemindersActivityTest :
     fun saveReminderScreen_showToastMessage() {
 
         //Launch Activity Scenario
-        val scenario = ActivityScenario.launch(RemindersActivity::class.java)
-        dataBindingIdlingResource.monitorActivity(scenario)
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
 
         //Click to Fab Button
         onView(withId(R.id.addReminderFAB)).perform(click())
@@ -202,18 +211,30 @@ class RemindersActivityTest :
         onView(withId(R.id.saveReminder)).perform(click())
         //check for toast is appear
         // this still not working (on api 29 and 30)
-        onView(withText(R.string.reminder_saved)).inRoot(
-            withDecorView(
-                   `is` (
-                       getActivity(
-                            appContext
-                        )?.window?.decorView
-                    )
-            )
-        ).check(matches(isDisplayed()))
-
-        scenario.close()
+        Espresso.onView(ViewMatchers.withText(R.string.reminder_saved))
+            .inRoot(ViewMatcher()).check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
     }
+
+    class ViewMatcher: TypeSafeMatcher<Root>(){
+        override fun describeTo(description: Description?) {
+            description?.appendText("toast")
+        }
+
+        override fun matchesSafely(item: Root?): Boolean {
+            val type: Int = item!!.windowLayoutParams?.get()?.type ?: 0
+            if (type == WindowManager.LayoutParams.TYPE_TOAST) {
+                val windowToken: IBinder = item.decorView!!.windowToken
+                val appToken: IBinder = item.decorView.applicationWindowToken
+                if (windowToken === appToken) {
+                    return true
+                }
+            }
+            return false
+        }
+
+
+    }
+
 
 
 }

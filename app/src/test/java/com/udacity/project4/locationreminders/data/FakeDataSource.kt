@@ -8,41 +8,43 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-class FakeDataSource(var reminders: MutableList<ReminderDTO>? = mutableListOf<ReminderDTO>()) :
-    ReminderDataSource {
+class FakeDataSource : ReminderDataSource {
 
-    var returnError = false
+//   Create a fake data source to act as a double to the real data source
+    var remindersDao: LinkedHashMap<String, ReminderDTO> = LinkedHashMap()
 
-    fun setError(value: Boolean) {
-        returnError = value
+    private var shouldReturnError = false
+
+    fun setReturnError(value: Boolean) {
+        shouldReturnError = value
     }
 
     override suspend fun getReminders(): Result<List<ReminderDTO>> {
-        if (!returnError) {
-            reminders?.let {
-                return Result.Success(ArrayList(it))
-            }
-        }
-        return Result.Error("Tasks not found")
+        if (shouldReturnError)
+            return Result.Error("Reminder exception")
+        else
+            return Result.Success(remindersDao.values.toList())
+
     }
 
     override suspend fun saveReminder(reminder: ReminderDTO) {
-        reminders?.add(reminder)
+        remindersDao[reminder.id] = reminder
     }
 
     override suspend fun getReminder(id: String): Result<ReminderDTO> {
-        if (!returnError) {
-            for (i in reminders!!) {
-                if (i.id == id)
-                    return Result.Success(i)
-            }
+        if (shouldReturnError) {
+            return Result.Error("Reminder exception")
         }
-        return Result.Error("not Found")
+
+        val reminder = remindersDao[id]
+
+        if(reminder != null)
+            return Result.Success(reminder)
+
+        return Result.Error("Reminder not found")
     }
 
     override suspend fun deleteAllReminders() {
-        reminders?.clear()
+        remindersDao.clear()
     }
-
-
 }

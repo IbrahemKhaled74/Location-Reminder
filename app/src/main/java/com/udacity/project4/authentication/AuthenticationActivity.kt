@@ -96,7 +96,7 @@ class AuthenticationActivity : AppCompatActivity() {
             .createSignInIntentBuilder()
             .setAvailableProviders(providers)
             .setTheme(R.style.AppTheme)
-            .setAuthMethodPickerLayout(customLayout)
+                .setAuthMethodPickerLayout(customLayout)
             .build()
 
 
