@@ -9,38 +9,43 @@ import kotlinx.coroutines.withContext
 
 
 //Use FakeDataSource that acts as a test double to the LocalDataSource
-class FakeDataSource( private val remindersDao: RemindersDao,
-                      private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+class FakeDataSource( private var reminders: MutableList<ReminderDTO>? = mutableListOf()
 ) : ReminderDataSource {
 
+    private var shouldReturnError = false
 
-
-    override suspend fun getReminders(): Result<List<ReminderDTO>> = withContext(ioDispatcher) {
-        return@withContext try {
-            Result.Success(remindersDao.getReminders())
-        } catch (ex: Exception) {
-            Result.Error(ex.localizedMessage)
-        }
+    fun setShouldReturnError(shouldReturn: Boolean) {
+        this.shouldReturnError = shouldReturn
     }
+
+
+    override suspend fun getReminders(): Result<List<ReminderDTO>> =
+        if (shouldReturnError) {
+            Result.Error("Error occurred")
+        } else {
+            Result.Success(ArrayList(reminders))
+        }
+
     override suspend fun saveReminder(reminder: ReminderDTO) {
-        remindersDao.saveReminder(reminder)
+        reminders?.add(reminder)
 
     }
 
-    override suspend fun getReminder(id: String): Result<ReminderDTO> = withContext(ioDispatcher) {
-        try {
-            val reminder = remindersDao.getReminderById(id)
-            if (reminder != null) {
-                return@withContext Result.Success(reminder)
+    override suspend fun getReminder(id: String): Result<ReminderDTO> =
+        if (shouldReturnError) {
+            Result.Error("Error occurred")
+        } else {
+            val reminder = reminders?.find { it.id == id }
+
+            if (reminder == null) {
+                Result.Error("Not found")
             } else {
-                return@withContext Result.Error("Reminder not found!")
+                Result.Success(reminder)
             }
-        } catch (e: Exception) {
-            return@withContext Result.Error(e.localizedMessage)
         }
-    }
+
     override suspend fun deleteAllReminders() {
-        remindersDao.deleteAllReminders()
+        reminders?.clear()
     }
 
 

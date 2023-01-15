@@ -1,8 +1,6 @@
 package com.udacity.project4
 
-import android.app.Activity
 import android.app.Application
-import android.os.IBinder
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.test.core.app.ActivityScenario
@@ -16,10 +14,12 @@ import androidx.test.espresso.matcher.RootMatchers.withDecorView
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
+import androidx.test.rule.ActivityTestRule
+import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
-import com.google.android.material.internal.ContextUtils.getActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
@@ -35,6 +35,7 @@ import org.hamcrest.Description
 import org.hamcrest.TypeSafeMatcher
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -43,7 +44,6 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.koin.test.get
-
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -54,6 +54,8 @@ class RemindersActivityTest :
     private lateinit var repository: ReminderDataSource
     private lateinit var appContext: Application
     private val dataBindingIdlingResource = DataBindingIdlingResource()
+
+
 
     /**
      * As we use Koin as a Service Locator Library to develop our code, we'll also use Koin to test our code.
@@ -181,7 +183,7 @@ class RemindersActivityTest :
         //click in select location button navigate to map to chose my location
         onView(withId(R.id.selectLocation)).perform(click())
 
-        val uiDevice = UiDevice.getInstance(getInstrumentation())
+        var uiDevice = UiDevice.getInstance(getInstrumentation())
 
         SystemClock.sleep(5000)
         //click to chose my current location
@@ -199,21 +201,14 @@ class RemindersActivityTest :
         onView(withId(R.id.saveReminder)).perform(click())
         //check for toast is appear
 
-        onView(withText(R.string.reminder_saved)).inRoot(
-            withDecorView(
-                not(
-                    `is`(
-                        getActivity(
-                            appContext
-                        )?.window?.decorView
-                    )
-                )
-            )
-        )
-
+        //this still not working (on api 29 and 30)
+        uiDevice.waitForIdle()
+        org.junit.Assert.assertTrue(uiDevice.hasObject(By.text("Reminder Saved !")))
 
         scenario.close()
     }
 
 
 }
+
+

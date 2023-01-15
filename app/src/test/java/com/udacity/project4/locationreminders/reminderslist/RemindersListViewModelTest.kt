@@ -47,22 +47,14 @@ class RemindersListViewModelTest {
     private lateinit var reminderListViewModel: RemindersListViewModel
 
     private lateinit var fakeDataSource: FakeDataSource
-    private lateinit var repository: RemindersLocalRepository
-    private lateinit var database: RemindersDatabase
 
 
 
     @Before
-    fun setup() {
-        database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(), RemindersDatabase::class.java
-        ).allowMainThreadQueries().build()
-        fakeDataSource= FakeDataSource(database.reminderDao())
-
-        repository= RemindersLocalRepository(database.reminderDao(),Dispatchers.Main)
-
+    fun model(){ stopKoin()
+        fakeDataSource = FakeDataSource()
+        reminderListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }
-
 
 
     @get:Rule
@@ -98,27 +90,22 @@ class RemindersListViewModelTest {
     @After
     fun finish() {
         stopKoin()
-        database.close()
     }
 
     @Test
     fun `when list is null or empty return no reminder to return `() = runBlockingTest {
-        repository.saveReminder(reminderList[0])
-        reminderListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
-
+        fakeDataSource.deleteAllReminders()
 
         reminderListViewModel.loadReminders()
 
-        assertThat( reminderListViewModel.remindersList.getOrAwaitValueTest(), not (emptyList()))
+        assertThat(reminderListViewModel.remindersList.getOrAwaitValueTest().size, `is` (0))
+        assertThat(reminderListViewModel.showNoData.getOrAwaitValueTest(), `is` (true))
 
 
     }
     @Test
     fun `when list have data return the data `() = runBlockingTest {
-        repository.saveReminder(reminderList[0])
-        reminderListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
+        fakeDataSource.saveReminder(reminderList[0])
 
         reminderListViewModel.loadReminders()
 
@@ -127,9 +114,7 @@ class RemindersListViewModelTest {
     }
     @Test
     fun `when list not loaded yet show loading `()= runBlockingTest{
-        repository.saveReminder(ReminderDTO("","","",0.0,0.0,""))
-        reminderListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
+        fakeDataSource.saveReminder(reminderList[0])
 
         mainCoroutineRule.pauseDispatcher()
         reminderListViewModel.loadReminders()
@@ -137,15 +122,15 @@ class RemindersListViewModelTest {
         assertThat(reminderListViewModel.showLoading.getOrAwaitValueTest(), `is`(true))
 
     }
-    fun `when list is null or empty show error `()= runBlockingTest{
-        repository.saveReminder(ReminderDTO("","","",0.0,0.0,""))
-        reminderListViewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
+
+    @Test
+    fun loadRemindersShouldReturnError()= runBlockingTest{
+
+        fakeDataSource.setShouldReturnError(true)
 
         reminderListViewModel.loadReminders()
 
-        assertThat(reminderListViewModel.showErrorMessage.getOrAwaitValueTest(), `is`("No reminders to return"))
-
+        assertThat(reminderListViewModel.showSnackBar.getOrAwaitValueTest(), `is`("Error occurred"))
     }
 
 

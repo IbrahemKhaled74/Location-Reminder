@@ -5,7 +5,9 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertThat
 import com.udacity.project4.R
+import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.locationreminders.MainCoroutineRule
 import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
@@ -36,8 +38,6 @@ class SaveReminderViewModelTest {
 
     private lateinit var saveReminderViewModel: SaveReminderViewModel
     private lateinit var fakeDataSource: FakeDataSource
-    private lateinit var repository: RemindersLocalRepository
-    private lateinit var database: RemindersDatabase
 
 
     @get:Rule
@@ -45,6 +45,7 @@ class SaveReminderViewModelTest {
 
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
+
     private var reminderDataItemList= mutableListOf<ReminderDataItem>(
         ReminderDataItem(
         title ="" ,
@@ -69,14 +70,9 @@ class SaveReminderViewModelTest {
     )
 
     @Before
-    fun setup() {
-        database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(), RemindersDatabase::class.java
-        ).allowMainThreadQueries().build()
-        fakeDataSource= FakeDataSource(database.reminderDao())
-
-        repository= RemindersLocalRepository(database.reminderDao(), Dispatchers.Main)
-
+    fun model(){ stopKoin()
+        fakeDataSource = FakeDataSource()
+        saveReminderViewModel = SaveReminderViewModel(ApplicationProvider.getApplicationContext(), fakeDataSource)
     }
 
 
@@ -84,16 +80,12 @@ class SaveReminderViewModelTest {
     @After
     fun finish() {
         stopKoin()
-        database.close()
     }
 
     @Test
     fun `when list is no title   return enter your title `() = runBlockingTest {
-        repository.saveReminder(ReminderDTO("","desc","test",0.0,0.0))
 
-        saveReminderViewModel = SaveReminderViewModel(
-            ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
+
 
         saveReminderViewModel.validateEnteredData(reminderDataItemList[0])
 
@@ -103,11 +95,8 @@ class SaveReminderViewModelTest {
 
     }
     @Test
-    fun `when list is no location   return enter your title `() = runBlockingTest {
-        repository.saveReminder(ReminderDTO("ddd","desc","",0.0,0.0))
-        saveReminderViewModel = SaveReminderViewModel(
-            ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
+    fun `when list is no location  return enter your title `() = runBlockingTest {
+
 
         saveReminderViewModel.validateEnteredData(reminderDataItemList[1])
 
@@ -118,11 +107,7 @@ class SaveReminderViewModelTest {
     }
     @Test
     fun `when list is not loaded  show loading `() = runBlockingTest {
-        repository.saveReminder(ReminderDTO("dd","desc","dd",0.0,0.0))
 
-        saveReminderViewModel = SaveReminderViewModel(
-            ApplicationProvider.getApplicationContext(),
-            fakeDataSource)
 
         mainCoroutineRule.pauseDispatcher()
         saveReminderViewModel.validateAndSaveReminder(reminderDataItemList[2])
@@ -132,6 +117,26 @@ class SaveReminderViewModelTest {
         )
 
     }
+
+    @Test
+    fun `when list is  loaded  show massage saved Reminder Saved ! `() = runBlockingTest {
+
+        saveReminderViewModel.validateAndSaveReminder(reminderDataItemList[2])
+
+        assertThat(saveReminderViewModel.showToast.getOrAwaitValueTest()).isEqualTo("Reminder Saved !")
+
+    }
+
+    @Test
+    fun `when save data go back `() {
+        saveReminderViewModel.validateAndSaveReminder(reminderDataItemList[2])
+        assertThat(saveReminderViewModel.navigationCommand.getOrAwaitValueTest()).isEqualTo(
+            NavigationCommand.Back)
+    }
+
+
+
+
 
 
 
