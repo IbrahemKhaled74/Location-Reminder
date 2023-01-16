@@ -12,6 +12,7 @@ import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.Root
+import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -203,6 +204,7 @@ class RemindersActivityTest :
 
         //click in map to select location
         onView(withId(R.id.mapFragment)).perform(click())
+
         SystemClock.sleep(1000)
         //click in save button navigate back
         onView(withId(R.id.save_button)).perform(click())
@@ -214,6 +216,35 @@ class RemindersActivityTest :
         Espresso.onView(ViewMatchers.withText(R.string.reminder_saved))
             .inRoot(ViewMatcher()).check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
     }
+
+
+
+    @Test
+    fun saveReminderScreen_emptyTitleSnackBar() {
+        //When Saving a new Reminder without entering a title
+        val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+        dataBindingIdlingResource.monitorActivity(activityScenario)
+
+        onView(withId(R.id.addReminderFAB)).perform(click())
+        onView(withId(R.id.reminderDescription))
+            .perform(typeText("desc"))
+        closeSoftKeyboard()
+        onView(withId(R.id.selectLocation)).perform(click())
+        //Wait till map loads
+        Thread.sleep(5000)
+        onView(withId(R.id.mapFragment)).perform(longClick())
+        SystemClock.sleep(1000)
+        onView(withId(R.id.mapFragment)).perform(click())
+
+        onView(withId(R.id.save_button)).perform(ViewActions.click())
+        onView(withId(R.id.saveReminder)).perform(ViewActions.click())
+        val snackBarMessage = appContext.getString(R.string.err_enter_title)
+        //Then a SnackBar should appear when trying to save empty Title
+        onView(withText(snackBarMessage))
+            .check(matches(isDisplayed()))
+        activityScenario.close()
+    }
+
 
     class ViewMatcher: TypeSafeMatcher<Root>(){
         override fun describeTo(description: Description?) {
@@ -234,7 +265,6 @@ class RemindersActivityTest :
 
 
     }
-
 
 
 }

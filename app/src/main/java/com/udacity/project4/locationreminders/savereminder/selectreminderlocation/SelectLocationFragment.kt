@@ -37,6 +37,8 @@ import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import kotlinx.android.synthetic.main.fragment_save_reminder.*
 import org.koin.android.ext.android.inject
 import java.security.Permission
+import java.util.*
+
 private const val REQUEST_CODE_BACKGROUND = 67
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 68
 private const val REQUEST_LOCATION_PERMISSION = 69
@@ -53,6 +55,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private var title = ""
     private var isLocationSelected = false
     private var location=""
+    private var marker: Marker? = null
+
 
 
     override fun onCreateView(
@@ -123,7 +127,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         setPoiClick(map)
-        setLongClick(map)
+        setMapLongClick(map)
         setMapStyle(map)
         enableMyLocation()
     }
@@ -137,22 +141,26 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         )
     }
 
-    private fun setLongClick(map: GoogleMap) {
-        map.setOnMapLongClickListener { latLong ->
-            val poiMarker = map.addMarker(
-                MarkerOptions()
-                    .position(latLong)
-                    .title(getString(R.string.dropped_pin))
+    private fun setMapLongClick(map: GoogleMap) {
+        map.setOnMapLongClickListener { latLng ->
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat: %1$.5f, Long: %2$.5f",
+                latLng.latitude,
+                latLng.longitude
             )
-            val zoomLevel = 18f
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLong, zoomLevel))
-            poiMarker.showInfoWindow()
-//            Poi = PointOfInterest(latLong,"","")
-            lat = latLong.latitude
-            long = latLong.longitude
-            title = getString(R.string.dropped_pin)
+            val myLatLng = LatLng(latLng.latitude, latLng.longitude)
+            Poi =
+                PointOfInterest(myLatLng, snippet, getString(R.string.select_location))
+            marker = map.addMarker(
+                MarkerOptions()
+                    .position(latLng)
+                    .title(getString(R.string.dropped_pin))
+                    .snippet(snippet)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+            )
+            marker?.isInfoWindowShown
         }
-        isLocationSelected = true
     }
 
     private fun setPoiClick(map: GoogleMap) {
@@ -272,6 +280,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
         }
     }
+
 
 }
 
