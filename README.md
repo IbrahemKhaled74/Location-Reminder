@@ -35,6 +35,7 @@ This will result in a Geofence that will trigger a notification when the user ge
 * [Repository Pattern](https://medium.com/swlh/repository-pattern-in-android-c31d0268118c)
 * [Koin](https://github.com/InsertKoinIO/koin) Lightweight dependency injection for kotlin
 * [Google Maps](https://developers.google.com/maps/documentation) For maps and places
+* [Local Notification](https://developer.android.com/develop/ui/views/notifications/build-notification) For remember the memory
 
 Testing
 * [Mockito](https://github.com/mockito/mockito) Mocking framework
